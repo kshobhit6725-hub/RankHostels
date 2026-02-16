@@ -1,0 +1,979 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HostelRank India - Smart Hostel Property Ranking System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .input-focus:focus {
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+        }
+        
+        .rank-badge {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .progress-bar {
+            transition: width 1s ease-in-out;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .star-rating {
+            color: #fbbf24;
+        }
+        
+        .tooltip {
+            position: relative;
+        }
+        
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="gradient-bg text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                    <span class="text-xl font-bold">HostelRank India</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="#dashboard" class="hover:text-yellow-300 transition">Dashboard</a>
+                    <a href="#add-property" class="hover:text-yellow-300 transition">Add Property</a>
+                    <a href="#rankings" class="hover:text-yellow-300 transition">Rankings</a>
+                    <a href="#analytics" class="hover:text-yellow-300 transition">Analytics</a>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span class="text-sm bg-white/20 px-3 py-1 rounded-full">12 Months Plan</span>
+                    <button class="bg-yellow-400 text-gray-900 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-300 transition">
+                        Full Access
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="gradient-bg text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">Smart Hostel Property Ranking System</h1>
+            <p class="text-xl text-white/80 mb-8">AI-powered ranking algorithm for hostels across India</p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <div class="bg-white/20 backdrop-blur px-6 py-3 rounded-lg">
+                    <span class="text-2xl font-bold" id="totalProperties">0</span>
+                    <p class="text-sm">Properties Ranked</p>
+                </div>
+                <div class="bg-white/20 backdrop-blur px-6 py-3 rounded-lg">
+                    <span class="text-2xl font-bold">28</span>
+                    <p class="text-sm">States Covered</p>
+                </div>
+                <div class="bg-white/20 backdrop-blur px-6 py-3 rounded-lg">
+                    <span class="text-2xl font-bold">12</span>
+                    <p class="text-sm">Months Access</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Add Property Form -->
+        <section id="add-property" class="mb-12">
+            <div class="bg-white rounded-2xl shadow-xl p-8 card-hover">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    Add New Hostel Property
+                </h2>
+                
+                <form id="propertyForm" class="space-y-6">
+                    <!-- Basic Information -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Hostel Name *</label>
+                            <input type="text" id="hostelName" required class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none focus:border-purple-500" placeholder="Enter hostel name">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">City *</label>
+                            <select id="city" required class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none focus:border-purple-500">
+                                <option value="">Select City</option>
+                                <option value="Mumbai">Mumbai</option>
+                                <option value="Delhi">Delhi</option>
+                                <option value="Bangalore">Bangalore</option>
+                                <option value="Hyderabad">Hyderabad</option>
+                                <option value="Chennai">Chennai</option>
+                                <option value="Kolkata">Kolkata</option>
+                                <option value="Pune">Pune</option>
+                                <option value="Jaipur">Jaipur</option>
+                                <option value="Ahmedabad">Ahmedabad</option>
+                                <option value="Lucknow">Lucknow</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">State *</label>
+                            <select id="state" required class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none focus:border-purple-500">
+                                <option value="">Select State</option>
+                                <option value="Maharashtra">Maharashtra</option>
+                                <option value="Delhi">Delhi</option>
+                                <option value="Karnataka">Karnataka</option>
+                                <option value="Telangana">Telangana</option>
+                                <option value="Tamil Nadu">Tamil Nadu</option>
+                                <option value="West Bengal">West Bengal</option>
+                                <option value="Rajasthan">Rajasthan</option>
+                                <option value="Gujarat">Gujarat</option>
+                                <option value="Uttar Pradesh">Uttar Pradesh</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Pricing -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Monthly Rent (₹) *</label>
+                            <input type="number" id="monthlyRent" required class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none focus:border-purple-500" placeholder="e.g., 8000">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Security Deposit (₹)</label>
+                            <input type="number" id="securityDeposit" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none focus:border-purple-500" placeholder="e.g., 16000">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Room Type *</label>
+                            <select id="roomType" required class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none focus:border-purple-500">
+                                <option value="">Select Type</option>
+                                <option value="single">Single Occupancy</option>
+                                <option value="double">Double Sharing</option>
+                                <option value="triple">Triple Sharing</option>
+                                <option value="dormitory">Dormitory (4+)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Ratings Section -->
+                    <div class="bg-gray-50 p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Rate Property Features (1-10)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2 tooltip" data-tooltip="Room size, furniture, ventilation">Room Quality</label>
+                                <input type="range" id="roomQuality" min="1" max="10" value="5" class="w-full accent-purple-600">
+                                <span class="text-sm text-gray-500" id="roomQualityValue">5</span>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2 tooltip" data-tooltip="Daily cleaning, hygiene standards">Cleanliness</label>
+                                <input type="range" id="cleanliness" min="1" max="10" value="5" class="w-full accent-purple-600">
+                                <span class="text-sm text-gray-500" id="cleanlinessValue">5</span>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2 tooltip" data-tooltip="Food quality, variety, timing">Food Quality</label>
+                                <input type="range" id="foodQuality" min="1" max="10" value="5" class="w-full accent-purple-600">
+                                <span class="text-sm text-gray-500" id="foodQualityValue">5</span>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2 tooltip" data-tooltip="CCTV, guards, entry system">Security</label>
+                                <input type="range" id="security" min="1" max="10" value="5" class="w-full accent-purple-600">
+                                <span class="text-sm text-gray-500" id="securityValue">5</span>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2 tooltip" data-tooltip="Metro, bus, market proximity">Location</label>
+                                <input type="range" id="location" min="1" max="10" value="5" class="w-full accent-purple-600">
+                                <span class="text-sm text-gray-500" id="locationValue">5</span>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2 tooltip" data-tooltip="WiFi, gym, laundry, parking">Amenities</label>
+                                <input type="range" id="amenities" min="1" max="10" value="5" class="w-full accent-purple-600">
+                                <span class="text-sm text-gray-500" id="amenitiesValue">5</span>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2 tooltip" data-tooltip="Staff behavior, responsiveness">Staff Behavior</label>
+                                <input type="range" id="staffBehavior" min="1" max="10" value="5" class="w-full accent-purple-600">
+                                <span class="text-sm text-gray-500" id="staffBehaviorValue">5</span>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2 tooltip" data-tooltip="Cost vs features offered">Value for Money</label>
+                                <input type="range" id="valueForMoney" min="1" max="10" value="5" class="w-full accent-purple-600">
+                                <span class="text-sm text-gray-500" id="valueForMoneyValue">5</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Amenities Checkboxes -->
+                    <div class="bg-gray-50 p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Available Amenities</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="wifi" class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">WiFi</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="ac" class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">AC</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="meals" class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">Meals</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="laundry" class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">Laundry</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="gym" class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">Gym</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="parking" class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">Parking</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="cctv" class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">CCTV</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="powerBackup" class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">Power Backup</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="hotWater" class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">Hot Water</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="tv" class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">TV/Common Area</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="studyRoom" class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">Study Room</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="biometric" class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">Biometric Entry</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Additional Details -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Gender Preference</label>
+                            <select id="genderPreference" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none focus:border-purple-500">
+                                <option value="boys">Boys Only</option>
+                                <option value="girls">Girls Only</option>
+                                <option value="coed">Co-ed</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Total Capacity</label>
+                            <input type="number" id="totalCapacity" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none focus:border-purple-500" placeholder="Total beds available">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
+                        <textarea id="notes" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none focus:border-purple-500" placeholder="Any special features or rules..."></textarea>
+                    </div>
+
+                    <button type="submit" class="w-full gradient-bg text-white py-4 rounded-xl font-semibold text-lg hover:opacity-90 transition transform hover:scale-[1.02]">
+                        Calculate Ranking & Add Property
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Rankings Section -->
+        <section id="rankings" class="mb-12">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                    Property Rankings
+                </h2>
+                <div class="flex space-x-2">
+                    <select id="filterCity" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-purple-500">
+                        <option value="">All Cities</option>
+                    </select>
+                    <select id="sortBy" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-purple-500">
+                        <option value="rank">Sort by Rank</option>
+                        <option value="price-low">Price: Low to High</option>
+                        <option value="price-high">Price: High to Low</option>
+                        <option value="rating">Highest Rating</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="rankingsContainer" class="space-y-4">
+                <!-- Rankings will be populated here -->
+                <div class="text-center py-12 text-gray-500">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    <p>No properties added yet. Add your first property above!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="analytics" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                Analytics Dashboard
+            </h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-2xl shadow-xl p-6 card-hover">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Price Distribution by City</h3>
+                    <canvas id="priceChart" height="250"></canvas>
+                </div>
+                <div class="bg-white rounded-2xl shadow-xl p-6 card-hover">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Rating Breakdown</h3>
+                    <canvas id="ratingChart" height="250"></canvas>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
+                <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl p-6 card-hover">
+                    <p class="text-sm opacity-80">Average Rent</p>
+                    <p class="text-3xl font-bold" id="avgRent">₹0</p>
+                </div>
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl p-6 card-hover">
+                    <p class="text-sm opacity-80">Highest Rated</p>
+                    <p class="text-3xl font-bold" id="highestRated">-</p>
+                </div>
+                <div class="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl p-6 card-hover">
+                    <p class="text-sm opacity-80">Best Value</p>
+                    <p class="text-3xl font-bold" id="bestValue">-</p>
+                </div>
+                <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl p-6 card-hover">
+                    <p class="text-sm opacity-80">Total Properties</p>
+                    <p class="text-3xl font-bold" id="totalProps">0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ranking Algorithm Explanation -->
+        <section class="mb-12">
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    Our Ranking Algorithm
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="text-center p-4 bg-purple-50 rounded-xl">
+                        <div class="w-12 h-12 bg-purple-500 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">25%</div>
+                        <h4 class="font-semibold text-gray-800">Quality Score</h4>
+                        <p class="text-sm text-gray-600">Room quality, cleanliness, food</p>
+                    </div>
+                    <div class="text-center p-4 bg-blue-50 rounded-xl">
+                        <div class="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">25%</div>
+                        <h4 class="font-semibold text-gray-800">Safety & Location</h4>
+                        <p class="text-sm text-gray-600">Security measures, accessibility</p>
+                    </div>
+                    <div class="text-center p-4 bg-green-50 rounded-xl">
+                        <div class="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">25%</div>
+                        <h4 class="font-semibold text-gray-800">Amenities</h4>
+                        <p class="text-sm text-gray-600">Facilities, staff behavior</p>
+                    </div>
+                    <div class="text-center p-4 bg-orange-50 rounded-xl">
+                        <div class="w-12 h-12 bg-orange-500 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">25%</div>
+                        <h4 class="font-semibold text-gray-800">Value for Money</h4>
+                        <p class="text-sm text-gray-600">Price vs features ratio</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="gradient-bg text-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">HostelRank India</h3>
+                    <p class="text-white/70">The most comprehensive hostel ranking system in India. Making informed decisions easier for students and professionals.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Your Plan</h4>
+                    <div class="bg-white/10 p-4 rounded-lg">
+                        <p class="font-semibold">12 Months Full Access</p>
+                        <p class="text-sm text-white/70">Unlimited property rankings</p>
+                        <p class="text-sm text-white/70">Complete analytics access</p>
+                        <p class="text-sm text-white/70">Export & API access</p>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Contact</h4>
+                    <p class="text-white/70">support@hostelrank.in</p>
+                    <p class="text-white/70">+91 98765 43210</p>
+                </div>
+            </div>
+            <div class="border-t border-white/20 mt-8 pt-8 text-center text-white/60">
+                <p>© 2024 HostelRank India. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Property Detail Modal -->
+    <div id="propertyModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Data Storage
+        let properties = [];
+        let priceChart, ratingChart;
+
+        // Initialize sliders
+        const sliders = ['roomQuality', 'cleanliness', 'foodQuality', 'security', 'location', 'amenities', 'staffBehavior', 'valueForMoney'];
+        sliders.forEach(slider => {
+            const element = document.getElementById(slider);
+            const valueDisplay = document.getElementById(slider + 'Value');
+            element.addEventListener('input', () => {
+                valueDisplay.textContent = element.value;
+            });
+        });
+
+        // Calculate Ranking Score
+        function calculateRankingScore(property) {
+            const weights = {
+                roomQuality: 0.10,
+                cleanliness: 0.10,
+                foodQuality: 0.05,
+                security: 0.15,
+                location: 0.10,
+                amenities: 0.10,
+                staffBehavior: 0.10,
+                valueForMoney: 0.15
+            };
+
+            let baseScore = 0;
+            for (const [key, weight] of Object.entries(weights)) {
+                baseScore += (property[key] / 10) * weight * 100;
+            }
+
+            // Amenities bonus (up to 15 points)
+            const amenitiesList = ['wifi', 'ac', 'meals', 'laundry', 'gym', 'parking', 'cctv', 'powerBackup', 'hotWater', 'tv', 'studyRoom', 'biometric'];
+            const amenitiesCount = amenitiesList.filter(a => property.amenitiesChecked[a]).length;
+            const amenitiesBonus = (amenitiesCount / amenitiesList.length) * 15;
+
+            // Price efficiency bonus
+            const avgRent = 8000; // Average baseline
+            const priceEfficiency = property.monthlyRent < avgRent ? ((avgRent - property.monthlyRent) / avgRent) * 5 : 0;
+
+            const totalScore = Math.min(100, baseScore + amenitiesBonus + priceEfficiency);
+            return Math.round(totalScore * 10) / 10;
+        }
+
+        // Get Rank Badge Color
+        function getRankBadgeColor(rank) {
+            if (rank === 1) return 'bg-yellow-400 text-yellow-900';
+            if (rank === 2) return 'bg-gray-300 text-gray-800';
+            if (rank === 3) return 'bg-orange-400 text-orange-900';
+            return 'bg-purple-100 text-purple-800';
+        }
+
+        // Get Score Color
+        function getScoreColor(score) {
+            if (score >= 80) return 'text-green-600';
+            if (score >= 60) return 'text-blue-600';
+            if (score >= 40) return 'text-yellow-600';
+            return 'text-red-600';
+        }
+
+        // Render Rankings
+        function renderRankings() {
+            const container = document.getElementById('rankingsContainer');
+            const filterCity = document.getElementById('filterCity').value;
+            const sortBy = document.getElementById('sortBy').value;
+
+            let filteredProperties = [...properties];
+            
+            if (filterCity) {
+                filteredProperties = filteredProperties.filter(p => p.city === filterCity);
+            }
+
+            // Sort
+            switch (sortBy) {
+                case 'price-low':
+                    filteredProperties.sort((a, b) => a.monthlyRent - b.monthlyRent);
+                    break;
+                case 'price-high':
+                    filteredProperties.sort((a, b) => b.monthlyRent - a.monthlyRent);
+                    break;
+                case 'rating':
+                    filteredProperties.sort((a, b) => b.score - a.score);
+                    break;
+                default:
+                    filteredProperties.sort((a, b) => b.score - a.score);
+            }
+
+            if (filteredProperties.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-gray-500">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                        <p>No properties found. Add your first property above!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filteredProperties.map((property, index) => {
+                const rank = index + 1;
+                const amenitiesTags = Object.entries(property.amenitiesChecked)
+                    .filter(([key, value]) => value)
+                    .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1))
+                    .slice(0, 5);
+
+                return `
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover fade-in" style="animation-delay: ${index * 0.1}s">
+                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                            <div class="flex items-start gap-4">
+                                <div class="rank-badge ${getRankBadgeColor(rank)} w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">
+                                    #${rank}
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold text-gray-800">${property.hostelName}</h3>
+                                    <p class="text-gray-600">${property.city}, ${property.state}</p>
+                                    <div class="flex flex-wrap gap-2 mt-2">
+                                        <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">${property.roomType}</span>
+                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">${property.genderPreference}</span>
+                                        ${amenitiesTags.map(tag => `<span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">${tag}</span>`).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col lg:flex-row items-start lg:items-center gap-4">
+                                <div class="text-center">
+                                    <p class="text-sm text-gray-500">Monthly Rent</p>
+                                    <p class="text-2xl font-bold text-gray-800">₹${property.monthlyRent.toLocaleString()}</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-sm text-gray-500">Ranking Score</p>
+                                    <p class="text-3xl font-bold ${getScoreColor(property.score)}">${property.score}</p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="viewDetails(${property.id})" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
+                                        View Details
+                                    </button>
+                                    <button onclick="deleteProperty(${property.id})" class="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200 transition">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-100">
+                            <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
+                                ${['roomQuality', 'cleanliness', 'foodQuality', 'security', 'location', 'amenities', 'staffBehavior', 'valueForMoney'].map(key => `
+                                    <div class="text-center">
+                                        <div class="text-xs text-gray-500 truncate">${key.replace(/([A-Z])/g, ' $1').trim()}</div>
+                                        <div class="font-semibold ${property[key] >= 7 ? 'text-green-600' : property[key] >= 5 ? 'text-yellow-600' : 'text-red-600'}">${property[key]}/10</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Update total properties counter
+            document.getElementById('totalProperties').textContent = properties.length;
+            document.getElementById('totalProps').textContent = properties.length;
+        }
+
+        // View Property Details
+        function viewDetails(id) {
+            const property = properties.find(p => p.id === id);
+            if (!property) return;
+
+            const modal = document.getElementById('propertyModal');
+            const content = document.getElementById('modalContent');
+
+            content.innerHTML = `
+                <div class="gradient-bg text-white p-6 rounded-t-2xl">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-2xl font-bold">${property.hostelName}</h2>
+                            <p class="text-white/80">${property.city}, ${property.state}</p>
+                        </div>
+                        <button onclick="closeModal()" class="text-white/80 hover:text-white">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-4 mt-4">
+                        <div class="bg-white/20 px-4 py-2 rounded-lg">
+                            <span class="text-3xl font-bold">${property.score}</span>
+                            <span class="text-sm">/100</span>
+                        </div>
+                        <div>
+                            <p class="text-lg font-semibold">₹${property.monthlyRent.toLocaleString()}/month</p>
+                            <p class="text-sm text-white/70">Deposit: ₹${property.securityDeposit?.toLocaleString() || 'N/A'}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-500">Room Type</p>
+                            <p class="font-semibold">${property.roomType}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-500">Gender</p>
+                            <p class="font-semibold">${property.genderPreference}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-500">Capacity</p>
+                            <p class="font-semibold">${property.totalCapacity || 'N/A'} beds</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-500">Added On</p>
+                            <p class="font-semibold">${new Date(property.addedOn).toLocaleDateString('en-IN')}</p>
+                        </div>
+                    </div>
+                    
+                    <h3 class="font-semibold text-gray-800 mb-3">Rating Breakdown</h3>
+                    <div class="space-y-3 mb-6">
+                        ${['roomQuality', 'cleanliness', 'foodQuality', 'security', 'location', 'amenities', 'staffBehavior', 'valueForMoney'].map(key => `
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">${key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                    <span class="font-semibold">${property[key]}/10</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div class="h-full progress-bar ${property[key] >= 7 ? 'bg-green-500' : property[key] >= 5 ? 'bg-yellow-500' : 'bg-red-500'}" style="width: ${property[key] * 10}%"></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <h3 class="font-semibold text-gray-800 mb-3">Amenities</h3>
+                    <div class="flex flex-wrap gap-2 mb-6">
+                        ${Object.entries(property.amenitiesChecked).filter(([k, v]) => v).map(([key]) => `
+                            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                                ${key.charAt(0).toUpperCase() + key.slice(1)}
+                            </span>
+                        `).join('')}
+                        ${Object.entries(property.amenitiesChecked).filter(([k, v]) => !v).map(([key]) => `
+                            <span class="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                </svg>
+                                ${key.charAt(0).toUpperCase() + key.slice(1)}
+                            </span>
+                        `).join('')}
+                    </div>
+                    
+                    ${property.notes ? `
+                        <h3 class="font-semibold text-gray-800 mb-2">Notes</h3>
+                        <p class="text-gray-600 bg-gray-50 p-4 rounded-lg">${property.notes}</p>
+                    ` : ''}
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('propertyModal').classList.add('hidden');
+        }
+
+        // Delete Property
+        function deleteProperty(id) {
+            if (confirm('Are you sure you want to delete this property?')) {
+                properties = properties.filter(p => p.id !== id);
+                saveToLocalStorage();
+                renderRankings();
+                updateCharts();
+                updateStats();
+            }
+        }
+
+        // Update Filter Options
+        function updateFilterOptions() {
+            const filterCity = document.getElementById('filterCity');
+            const cities = [...new Set(properties.map(p => p.city))];
+            filterCity.innerHTML = '<option value="">All Cities</option>' + 
+                cities.map(city => `<option value="${city}">${city}</option>`).join('');
+        }
+
+        // Update Statistics
+        function updateStats() {
+            if (properties.length === 0) {
+                document.getElementById('avgRent').textContent = '₹0';
+                document.getElementById('highestRated').textContent = '-';
+                document.getElementById('bestValue').textContent = '-';
+                return;
+            }
+
+            const avgRent = Math.round(properties.reduce((sum, p) => sum + p.monthlyRent, 0) / properties.length);
+            document.getElementById('avgRent').textContent = `₹${avgRent.toLocaleString()}`;
+
+            const highestRated = properties.reduce((max, p) => p.score > max.score ? p : max);
+            document.getElementById('highestRated').textContent = highestRated.hostelName.substring(0, 15) + (highestRated.hostelName.length > 15 ? '...' : '');
+
+            // Best value = highest score per rupee
+            const bestValue = properties.reduce((best, p) => {
+                const valueRatio = p.score / p.monthlyRent;
+                const bestRatio = best.score / best.monthlyRent;
+                return valueRatio > bestRatio ? p : best;
+            });
+            document.getElementById('bestValue').textContent = bestValue.hostelName.substring(0, 15) + (bestValue.hostelName.length > 15 ? '...' : '');
+        }
+
+        // Initialize Charts
+        function initCharts() {
+            const priceCtx = document.getElementById('priceChart').getContext('2d');
+            const ratingCtx = document.getElementById('ratingChart').getContext('2d');
+
+            priceChart = new Chart(priceCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Average Rent (₹)',
+                        data: [],
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => '₹' + value.toLocaleString()
+                            }
+                        }
+                    }
+                }
+            });
+
+            ratingChart = new Chart(ratingCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Room Quality', 'Cleanliness', 'Food', 'Security', 'Location', 'Amenities', 'Staff', 'Value'],
+                    datasets: [{
+                        label: 'Average Ratings',
+                        data: [0, 0, 0, 0, 0, 0, 0, 0],
+                        backgroundColor: 'rgba(118, 75, 162, 0.2)',
+                        borderColor: 'rgba(118, 75, 162, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(118, 75, 162, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 10
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update Charts
+        function updateCharts() {
+            if (properties.length === 0) {
+                priceChart.data.labels = [];
+                priceChart.data.datasets[0].data = [];
+                ratingChart.data.datasets[0].data = [0, 0, 0, 0, 0, 0, 0, 0];
+                priceChart.update();
+                ratingChart.update();
+                return;
+            }
+
+            // Price chart by city
+            const cityPrices = {};
+            properties.forEach(p => {
+                if (!cityPrices[p.city]) cityPrices[p.city] = [];
+                cityPrices[p.city].push(p.monthlyRent);
+            });
+
+            const cityLabels = Object.keys(cityPrices);
+            const cityAvgPrices = cityLabels.map(city => 
+                Math.round(cityPrices[city].reduce((a, b) => a + b, 0) / cityPrices[city].length)
+            );
+
+            priceChart.data.labels = cityLabels;
+            priceChart.data.datasets[0].data = cityAvgPrices;
+            priceChart.update();
+
+            // Rating radar chart
+            const ratingKeys = ['roomQuality', 'cleanliness', 'foodQuality', 'security', 'location', 'amenities', 'staffBehavior', 'valueForMoney'];
+            const avgRatings = ratingKeys.map(key => 
+                Math.round((properties.reduce((sum, p) => sum + p[key], 0) / properties.length) * 10) / 10
+            );
+
+            ratingChart.data.datasets[0].data = avgRatings;
+            ratingChart.update();
+        }
+
+        // Save to Local Storage
+        function saveToLocalStorage() {
+            localStorage.setItem('hostelRankProperties', JSON.stringify(properties));
+        }
+
+        // Load from Local Storage
+        function loadFromLocalStorage() {
+            const stored = localStorage.getItem('hostelRankProperties');
+            if (stored) {
+                properties = JSON.parse(stored);
+            }
+        }
+
+        // Form Submission
+        document.getElementById('propertyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const property = {
+                id: Date.now(),
+                hostelName: document.getElementById('hostelName').value,
+                city: document.getElementById('city').value,
+                state: document.getElementById('state').value,
+                monthlyRent: parseInt(document.getElementById('monthlyRent').value),
+                securityDeposit: parseInt(document.getElementById('securityDeposit').value) || 0,
+                roomType: document.getElementById('roomType').value,
+                roomQuality: parseInt(document.getElementById('roomQuality').value),
+                cleanliness: parseInt(document.getElementById('cleanliness').value),
+                foodQuality: parseInt(document.getElementById('foodQuality').value),
+                security: parseInt(document.getElementById('security').value),
+                location: parseInt(document.getElementById('location').value),
+                amenities: parseInt(document.getElementById('amenities').value),
+                staffBehavior: parseInt(document.getElementById('staffBehavior').value),
+                valueForMoney: parseInt(document.getElementById('valueForMoney').value),
+                amenitiesChecked: {
+                    wifi: document.getElementById('wifi').checked,
+                    ac: document.getElementById('ac').checked,
+                    meals: document.getElementById('meals').checked,
+                    laundry: document.getElementById('laundry').checked,
+                    gym: document.getElementById('gym').checked,
+                    parking: document.getElementById('parking').checked,
+                    cctv: document.getElementById('cctv').checked,
+                    powerBackup: document.getElementById('powerBackup').checked,
+                    hotWater: document.getElementById('hotWater').checked,
+                    tv: document.getElementById('tv').checked,
+                    studyRoom: document.getElementById('studyRoom').checked,
+                    biometric: document.getElementById('biometric').checked
+                },
+                genderPreference: document.getElementById('genderPreference').value,
+                totalCapacity: parseInt(document.getElementById('totalCapacity').value) || 0,
+                notes: document.getElementById('notes').value,
+                addedOn: new Date().toISOString()
+            };
+
+            property.score = calculateRankingScore(property);
+            properties.push(property);
+            saveToLocalStorage();
+
+            // Reset form
+            this.reset();
+            sliders.forEach(slider => {
+                document.getElementById(slider).value = 5;
+                document.getElementById(slider + 'Value').textContent = '5';
+            });
+
+            // Update UI
+            updateFilterOptions();
+            renderRankings();
+            updateCharts();
+            updateStats();
+
+            // Scroll to rankings
+            document.getElementById('rankings').scrollIntoView({ behavior: 'smooth' });
+
+            // Show success message
+            alert(`Property "${property.hostelName}" added successfully with a ranking score of ${property.score}/100!`);
+        });
+
+        // Filter and Sort Event Listeners
+        document.getElementById('filterCity').addEventListener('change', renderRankings);
+        document.getElementById('sortBy').addEventListener('change', renderRankings);
+
+        // Close modal on outside click
+        document.getElementById('propertyModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFromLocalStorage();
+            initCharts();
+            updateFilterOptions();
+            renderRankings();
+            updateCharts();
+            updateStats();
+        });
+    </script>
+</body>
+</html>
+```
